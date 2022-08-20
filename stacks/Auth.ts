@@ -15,7 +15,7 @@ export function AuthStack({ stack }: StackContext) {
   const hostedZone = HostedZone.fromLookup(stack, 'HostedZone', { domainName: 'mattwyskiel.com' });
   const upDomain = userPool.addDomain('UserPoolDomain', {
     customDomain:
-      stack.environment === 'prod'
+      process.env.NODE_ENV === 'prod'
         ? {
             domainName: 'auth.whiskey.mattwyskiel.com',
             certificate: new DnsValidatedCertificate(stack, 'AuthDomainCertificate', {
@@ -26,7 +26,7 @@ export function AuthStack({ stack }: StackContext) {
           }
         : undefined,
     cognitoDomain:
-      stack.environment !== 'prod'
+      process.env.NODE_ENV !== 'prod'
         ? {
             domainPrefix: 'whiskey-apps-auth',
           }
