@@ -1,7 +1,6 @@
 import { StackContext } from '@serverless-stack/resources';
-import { DnsValidatedCertificate } from 'aws-cdk-lib/aws-certificatemanager';
+import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
-import { HostedZone } from 'aws-cdk-lib/aws-route53';
 
 export function AuthStack({ stack }: StackContext) {
   const userPool = new UserPool(stack, 'AuthUserPool', {
@@ -12,16 +11,15 @@ export function AuthStack({ stack }: StackContext) {
       email: true,
     },
   });
-  const hostedZone = HostedZone.fromLookup(stack, 'HostedZone', { domainName: 'mattwyskiel.com' });
   const upDomain = userPool.addDomain('UserPoolDomain', {
     customDomain: !process.env.IS_LOCAL
       ? {
           domainName: 'auth.whiskey.mattwyskiel.com',
-          certificate: new DnsValidatedCertificate(stack, 'AuthDomainCertificate', {
-            domainName: 'auth.whiskey.mattwyskiel.com',
-            hostedZone,
-            region: 'us-east-1',
-          }),
+          certificate: Certificate.fromCertificateArn(
+            stack,
+            'Certificate',
+            'arn:aws:acm:us-east-1:662292074719:certificate/7af85e3e-fe4a-46db-bada-cd4421ff7a6a'
+          ),
         }
       : undefined,
     cognitoDomain: process.env.IS_LOCAL
