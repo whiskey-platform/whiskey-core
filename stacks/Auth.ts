@@ -4,7 +4,7 @@ import { UserPool } from 'aws-cdk-lib/aws-cognito';
 import { HostedZone } from 'aws-cdk-lib/aws-route53';
 
 export function AuthStack({ stack }: StackContext) {
-  const userPool = new UserPool(stack, 'UserPool', {
+  const userPool = new UserPool(stack, 'AuthUserPool', {
     signInAliases: {
       username: true,
       preferredUsername: true,
