@@ -14,23 +14,21 @@ export function AuthStack({ stack }: StackContext) {
   });
   const hostedZone = HostedZone.fromLookup(stack, 'HostedZone', { domainName: 'mattwyskiel.com' });
   const upDomain = userPool.addDomain('UserPoolDomain', {
-    customDomain:
-      process.env.NODE_ENV === 'prod'
-        ? {
+    customDomain: !process.env.IS_LOCAL
+      ? {
+          domainName: 'auth.whiskey.mattwyskiel.com',
+          certificate: new DnsValidatedCertificate(stack, 'AuthDomainCertificate', {
             domainName: 'auth.whiskey.mattwyskiel.com',
-            certificate: new DnsValidatedCertificate(stack, 'AuthDomainCertificate', {
-              domainName: 'auth.whiskey.mattwyskiel.com',
-              hostedZone,
-              region: 'us-east-1',
-            }),
-          }
-        : undefined,
-    cognitoDomain:
-      process.env.NODE_ENV !== 'prod'
-        ? {
-            domainPrefix: 'whiskey-apps-auth',
-          }
-        : undefined,
+            hostedZone,
+            region: 'us-east-1',
+          }),
+        }
+      : undefined,
+    cognitoDomain: process.env.IS_LOCAL
+      ? {
+          domainPrefix: 'whiskey-apps-auth',
+        }
+      : undefined,
   });
 
   stack.addOutputs({
