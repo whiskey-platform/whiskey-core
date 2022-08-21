@@ -16,8 +16,13 @@ export function AuthStack({ stack }: StackContext) {
     },
   });
 
+  const docsAppClient = userPool.addClient('WhiskeyDocsAppClient', {
+    userPoolClientName: 'WhiskeyDocsApp',
+  });
+
   stack.addOutputs({
     UserPool: userPool.userPoolId,
     UserPoolDomain: upDomain.domainName,
+    WhiskeyDocsAuthClient: docsAppClient.userPoolClientId,
   });
 }
