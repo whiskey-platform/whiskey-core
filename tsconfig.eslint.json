@@ -1,4 +1,0 @@
-{
-  "extends": "./tsconfig.json",
-  "include": ["services", "stacks", ".eslintrc.js", "vitest.config.ts"]
-}

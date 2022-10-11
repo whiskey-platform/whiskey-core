@@ -1,5 +1,6 @@
-import { AuthStack } from './Auth';
+import { MyStack } from './MyStack';
 import { App } from '@serverless-stack/resources';
+import SecretsStack from './Secrets';
 
 export default function (app: App) {
   app.setDefaultFunctionProps({
@@ -9,5 +10,5 @@ export default function (app: App) {
       format: 'esm',
     },
   });
-  app.stack(AuthStack);
+  app.stack(SecretsStack).stack(MyStack);
 }

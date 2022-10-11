@@ -1,0 +1,24 @@
+{
+  "name": "@auth-service/services",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {},
+  "dependencies": {
+    "@middy/core": "^3.5.0",
+    "@middy/http-json-body-parser": "^3.5.0",
+    "@middy/validator": "^3.5.0",
+    "@planetscale/database": "^1.4.0",
+    "@serverless-stack/node": "^1.15.11",
+    "json-schema-to-ts": "^2.5.5",
+    "jsonwebtoken": "^8.5.1",
+    "kysely": "^0.22.0",
+    "kysely-planetscale": "^1.0.1",
+    "reflect-metadata": "^0.1.13",
+    "typedi": "^0.10.0",
+    "winston": "^3.8.2"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.106",
+    "@types/jsonwebtoken": "^8.5.9"
+  }
+}
