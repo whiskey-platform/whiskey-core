@@ -92,11 +92,14 @@ const signUp: APIGatewayJSONBodyEventHandler<
     await deriveKey(event.body.password, salt, 1, 64, 'sha512')
   ).toString();
 
-  await db.insertInto('auth_info').values({
-    user_id: userId,
-    salt,
-    verifier: deriveVerifier(derivedPrivateKey),
-  });
+  await db
+    .insertInto('auth_info')
+    .values({
+      user_id: userId,
+      salt,
+      verifier: deriveVerifier(derivedPrivateKey),
+    })
+    .execute();
 
   return json({
     success: true,
