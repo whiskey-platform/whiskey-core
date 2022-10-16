@@ -1,5 +1,6 @@
 import middy from '@middy/core';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
+import { db } from 'lib/db/db.connection';
 import Container from 'typedi';
 import { APIGatewayJSONBodyEvent } from '../lambda-utils';
 import { logger as Logger } from '../logger';
@@ -26,8 +27,8 @@ export const clientVerify = <S>(): middy.MiddlewareObj<
     APIGatewayProxyResultV2
   > = async (request) => {
     Logger.info('Verifying Client credentials');
-    const clientId = request.event.headers['x-troupe-client-id'];
-    const clientSecret = request.event.headers['x-troupe-client-secret'];
+    const clientId = request.event.headers['x-whiskey-client-id'];
+    const clientSecret = request.event.headers['x-whiskey-client-secret'];
     try {
       if (!clientId || !clientSecret) {
         Logger.error('Missing client credentials');
@@ -37,17 +38,20 @@ export const clientVerify = <S>(): middy.MiddlewareObj<
         };
       }
 
-      // const dynamoDb = Container.get(DynamoDBService);
-      const client: any = {}; // await dynamoDb.getClientInformation(clientId);
+      const clientResponse = await db
+        .selectFrom('auth_clients')
+        .select(['id', 'secret'])
+        .where('id', '=', clientId!)
+        .execute();
 
-      if (!client) {
+      if (!clientResponse[0]) {
         Logger.error('Invalid client ID');
         throw {
           status: 401,
           message: 'ClientCredentialsError',
         };
       }
-
+      let client = clientResponse[0];
       if (clientSecret !== client.secret) {
         Logger.error('Invalid client secret');
         throw {

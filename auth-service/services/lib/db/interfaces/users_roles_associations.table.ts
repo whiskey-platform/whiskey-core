@@ -1,4 +1,4 @@
 export interface UsersToRolesAssociationTable {
-  username: string;
-  role_id: string;
+  user_id: number;
+  role_id: number;
 }

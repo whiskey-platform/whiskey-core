@@ -12,9 +12,10 @@ This request takes no body, and it will either throw a 401 error, or return a su
 
 import middy from '@middy/core';
 import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
-import { json } from '../../libs/lambda-utils';
-import jwtVerify, { retrieveJWTSecret } from '../../libs/middleware/jwt-verify';
-import requestMonitoring from '../../libs/middleware/request-monitoring';
+import clientVerify from 'lib/middleware/client-verify';
+import { json } from '../../lib/lambda-utils';
+import jwtVerify from '../../lib/middleware/jwt-verify';
+import requestMonitoring from '../../lib/middleware/request-monitoring';
 
 const validateToken: APIGatewayProxyHandlerV2 = async () => {
   // This should only run if JWT verification is successful.
@@ -25,5 +26,5 @@ const validateToken: APIGatewayProxyHandlerV2 = async () => {
 
 export const handler = middy(validateToken)
   .use(requestMonitoring())
-  .use(retrieveJWTSecret(process.env.JWT_SECRET_PARAMETER ?? ''))
+  .use(clientVerify())
   .use(jwtVerify());

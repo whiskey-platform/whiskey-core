@@ -1,17 +1,18 @@
 /*
 `POST /sign-up`
 
-This will be a plain username/password signup flow using SRP
+This will be a plain username/password signup flow from an administrative context (Postman, etc.).
 
 ```json
 {
   "displayName": "Matt Wyskiel",
   "email": "whiskey@mattwyskiel.com",
   "username": "mattwyskiel",
-  "salt": "FB95867E...",
-  "verifier": "9392093F..."
+  "password": "FB95867E...",
 }
 ```
+
+A salt and verifier will be generated, and stored.
 
 This will simply store the information in a DB and return a 'success' boolean:
 
@@ -26,9 +27,12 @@ import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import validator from '@middy/validator';
 import { db } from 'lib/db/db.connection';
-import Container from 'typedi';
 import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
+import { deriveVerifier, generateSalt } from 'secure-remote-password/client';
 import requestMonitoring from '../../lib/middleware/request-monitoring';
+import { promisify } from 'util';
+import { pbkdf2 } from 'crypto';
+import clientVerify from 'lib/middleware/client-verify';
 
 export const inputSchema = {
   type: 'object',
@@ -39,10 +43,10 @@ export const inputSchema = {
         firstName: { type: 'string' },
         lastName: { type: 'string' },
         username: { type: 'string' },
-        salt: { type: 'string' },
-        verifier: { type: 'string' },
+        roles: { type: 'array', items: { type: 'string' } },
+        password: { type: 'string' },
       },
-      required: ['email', 'username', 'salt', 'verifier'],
+      required: ['username', 'password', 'firstName', 'lastName', 'roles'],
     },
   },
 } as const;
@@ -50,10 +54,44 @@ export const inputSchema = {
 const signUp: APIGatewayJSONBodyEventHandler<
   typeof inputSchema.properties.body
 > = async (event) => {
-  await db.insertInto('users').values({
-    username: event.body.username,
-    first_name: event.body.firstName,
-    last_name: event.body.lastName,
+  // insert user demographic info into table
+  const userId = (
+    await db
+      .insertInto('users')
+      .values({
+        username: event.body.username,
+        last_name: event.body.lastName,
+        first_name: event.body.firstName,
+      })
+      .returning('id')
+      .execute()
+  )[0].id;
+
+  const roles = (
+    await db
+      .selectFrom('roles')
+      .select('id')
+      .where('name', 'in', event.body.roles)
+      .execute()
+  ).map((r) => r.id);
+
+  for (const role of roles) {
+    await db
+      .insertInto('users_roles_associations')
+      .values({ role_id: role, user_id: userId })
+      .execute();
+  }
+
+  const salt = generateSalt();
+  const deriveKey = promisify(pbkdf2);
+  const derivedPrivateKey = (
+    await deriveKey(event.body.password, salt, 1, 64, 'sha512')
+  ).toString();
+
+  await db.insertInto('auth_info').values({
+    user_id: userId,
+    salt,
+    verifier: deriveVerifier(derivedPrivateKey),
   });
 
   return json({
@@ -64,4 +102,5 @@ const signUp: APIGatewayJSONBodyEventHandler<
 export const handler = middy(signUp)
   .use(jsonBodyParser())
   .use(validator({ inputSchema }))
-  .use(requestMonitoring<typeof inputSchema.properties.body>());
+  .use(requestMonitoring<typeof inputSchema.properties.body>())
+  .use(clientVerify());

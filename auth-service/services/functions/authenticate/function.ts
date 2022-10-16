@@ -9,8 +9,8 @@
 ```
 
 Headers:
-'x-troupe-client-id': 'bgurwioawfna...'
-'x-troupe-client-secret': 'bgurwioawfna...'
+'x-whiskey-client-id': 'bgurwioawfna...'
+'x-whiskey-client-secret': 'bgurwioawfna...'
 
 The server, with this input, then also derives a strong session key, and verifies that the client
 also has the same key using the proof. The server also generates a JWT, that the client will then
@@ -26,18 +26,18 @@ retain or reject, if it can verify that the the server also generated the same k
 
 import Container from 'typedi';
 import { v4 } from 'uuid';
-import { APIGatewayJSONBodyEventHandler, json } from '../../libs/lambda-utils';
-import { DynamoDBService } from '../../libs/services/DynamoDB.service';
+import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
 import { deriveSession } from 'secure-remote-password/server';
 import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import validator from '@middy/validator';
-import requestMonitoring, { IError } from '../../libs/middleware/request-monitoring';
+import requestMonitoring, {
+  IError,
+} from '../../lib/middleware/request-monitoring';
 import { sign } from 'jsonwebtoken';
-import { Logger } from '../../libs/logger';
-import { retrieveJWTSecret, retrieveRefreshSecret } from '../../libs/middleware/jwt-verify';
-import clientVerify from '../../libs/middleware/client-verify';
-import { User } from '../../libs/models/User';
+import { logger as Logger } from '../../lib/logger';
+import clientVerify from '../../lib/middleware/client-verify';
+import { db } from 'lib/db/db.connection';
 
 export const inputSchema = {
   type: 'object',
@@ -55,20 +55,34 @@ export const inputSchema = {
 
 const authenticate: APIGatewayJSONBodyEventHandler<
   typeof inputSchema.properties.body
-> = async event => {
-  const dynamoDB = Container.get(DynamoDBService);
-
+> = async (event) => {
   try {
-    const user = await dynamoDB.getUser(event.body.username);
+    const userIdResponse = await db
+      .selectFrom('users')
+      .select(['id', 'username'])
+      .where('username', '=', event.body.username)
+      .execute();
+
+    if (userIdResponse[0] === undefined) {
+      throw {
+        status: 400,
+        message: 'User information not found.',
+      };
+    }
+
+    const auth_info = await db
+      .selectFrom('auth_info')
+      .select(['server_ephemeral', 'client_ephemeral', 'salt', 'verifier'])
+      .where('user_id', '=', userIdResponse[0].id)
+      .execute();
 
     if (
-      user === undefined ||
-      user.signIn?.ephemeral === undefined ||
-      user.signIn?.clientEph === undefined
+      auth_info[0] === undefined ||
+      auth_info[0].server_ephemeral === undefined ||
+      auth_info[0].client_ephemeral === undefined
     ) {
       Logger.error('User information not found', {
         username: event.body.username,
-        foundInfo: user,
       });
       throw {
         status: 400,
@@ -76,34 +90,55 @@ const authenticate: APIGatewayJSONBodyEventHandler<
       };
     }
 
-    const { salt, verifier, signIn } = user;
+    const { salt, verifier, server_ephemeral, client_ephemeral } = auth_info[0];
 
     const serverSession = deriveSession(
-      signIn.ephemeral!,
-      signIn.clientEph!,
+      server_ephemeral!,
+      client_ephemeral!,
       salt,
       event.body.username,
       verifier,
       event.body.proof
     );
 
-    const token = sign({ username: user.username }, event.headers['x-ssm-jwt-secret']!, {
-      issuer: 'troupe-user-service.mattwyskiel.com',
-      subject: user.id,
-      expiresIn: '1h',
-    });
+    const token = sign(
+      { username: userIdResponse[0].username },
+      event.headers['x-ssm-jwt-secret']!,
+      {
+        issuer: 'whiskey-user-service.mattwyskiel.com',
+        subject: `${userIdResponse[0].id}`,
+        expiresIn: '1h',
+      }
+    );
 
-    const refresh = sign({ username: user.username }, event.headers['x-ssm-refresh-secret']!, {
-      issuer: 'troupe-user-service.mattwyskiel.com',
-      subject: user.id,
-      expiresIn: '90d',
-    });
+    const refresh = sign(
+      { username: userIdResponse[0].username },
+      event.headers['x-ssm-refresh-secret']!,
+      {
+        issuer: 'whiskey-user-service.mattwyskiel.com',
+        subject: `${userIdResponse[0].id}`,
+        expiresIn: '90d',
+      }
+    );
 
-    const overwritten: Record<string, any> = { ...user, signIn: undefined };
-    overwritten.clients[event.headers['x-troupe-client-id']!] = refresh;
+    await db
+      .updateTable('auth_info')
+      .set({
+        server_ephemeral: null,
+        client_ephemeral: null,
+      })
+      .where('user_id', '=', userIdResponse[0].id)
+      .execute();
 
-    // overrite user, remove sign-in temporary properties
-    await dynamoDB.overwriteUser(overwritten as unknown as User);
+    await db
+      .insertInto('users_clients_associations')
+      .values({
+        user_id: userIdResponse[0].id,
+        client_id: event.headers['x-whiskey-client-id']!,
+        refresh_token: refresh,
+      })
+      .onDuplicateKeyUpdate({ refresh_token: refresh })
+      .execute();
 
     return json({
       proof: serverSession.proof,
@@ -113,7 +148,10 @@ const authenticate: APIGatewayJSONBodyEventHandler<
   } catch (error) {
     if (error as IError) {
       const err = error as IError;
-      Logger.error(err.message, err.details ? { details: err.details } : undefined);
+      Logger.error(
+        err.message,
+        err.details ? { details: err.details } : undefined
+      );
     } else {
       const err = error as Error;
       Logger.error(err.message, { stack: err.stack });
@@ -127,8 +165,6 @@ const authenticate: APIGatewayJSONBodyEventHandler<
 };
 
 export const handler = middy(authenticate)
-  .use(retrieveJWTSecret(process.env.JWT_SECRET_PARAMETER ?? ''))
-  .use(retrieveRefreshSecret(process.env.REFRESH_SECRET_PARAMETER ?? ''))
   .use(jsonBodyParser())
   .use(validator({ inputSchema }))
   .use(requestMonitoring<typeof inputSchema.properties.body>())

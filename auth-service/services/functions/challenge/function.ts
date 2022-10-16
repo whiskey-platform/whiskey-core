@@ -9,8 +9,8 @@
 ```
 
 Headers:
-'x-troupe-client-id': 'bgurwioawfna...'
-'x-troupe-client-secret': 'bgurwioawfna...'
+'x-whiskey-client-id': 'bgurwioawfna...'
+'x-whiskey-client-secret': 'bgurwioawfna...'
 
 - We retrieve the `salt` and `verifier` from the DB using the provided username
 - We generate an ephemeral value pair using the verifier
@@ -30,12 +30,15 @@ import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import validator from '@middy/validator';
 import Container from 'typedi';
-import { generateEphemeral as clientEphemeral, generateSalt } from 'secure-remote-password/client';
+import {
+  generateEphemeral as clientEphemeral,
+  generateSalt,
+} from 'secure-remote-password/client';
 import { generateEphemeral } from 'secure-remote-password/server';
-import { APIGatewayJSONBodyEventHandler, json } from '../../libs/lambda-utils';
-import requestMonitoring from '../../libs/middleware/request-monitoring';
-import { DynamoDBService } from '../../libs/services/DynamoDB.service';
-import clientVerify from '../../libs/middleware/client-verify';
+import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
+import requestMonitoring from '../../lib/middleware/request-monitoring';
+import clientVerify from '../../lib/middleware/client-verify';
+import { db } from 'lib/db/db.connection';
 
 export const inputSchema = {
   type: 'object',
@@ -53,27 +56,44 @@ export const inputSchema = {
 
 const authChallenge: APIGatewayJSONBodyEventHandler<
   typeof inputSchema.properties.body
-> = async event => {
-  const dynamoDB = Container.get(DynamoDBService);
-  const user = await dynamoDB.getUser(event.body.username);
+> = async (event) => {
+  const userIdResponse = await db
+    .selectFrom('users')
+    .select('id')
+    .where('username', '=', event.body.username)
+    .execute();
 
-  if (user === undefined) {
+  if (userIdResponse[0] === undefined) {
     return json({
       salt: generateSalt(),
       publicKey: clientEphemeral().public,
     });
   }
 
-  const { salt, verifier } = user;
+  const auth_info = await db
+    .selectFrom('auth_info')
+    .select(['salt', 'verifier'])
+    .where('user_id', '=', userIdResponse[0].id)
+    .execute();
+
+  if (auth_info[0] === undefined) {
+    return json({
+      salt: generateSalt(),
+      publicKey: clientEphemeral().public,
+    });
+  }
+
+  const { salt, verifier } = auth_info[0];
   const serverEphemeral = generateEphemeral(verifier);
 
-  dynamoDB.overwriteUser({
-    ...user,
-    signIn: {
-      ephemeral: serverEphemeral.secret,
-      clientEph: event.body.publicKey,
-    },
-  });
+  await db
+    .updateTable('auth_info')
+    .set({
+      server_ephemeral: serverEphemeral.secret,
+      client_ephemeral: event.body.publicKey,
+    })
+    .where('user_id', '=', userIdResponse[0].id)
+    .execute();
 
   return json({
     salt,
