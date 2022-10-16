@@ -55,18 +55,22 @@ const signUp: APIGatewayJSONBodyEventHandler<
   typeof inputSchema.properties.body
 > = async (event) => {
   // insert user demographic info into table
+  await db
+    .insertInto('users')
+    .values({
+      username: event.body.username,
+      last_name: event.body.lastName,
+      first_name: event.body.firstName,
+    })
+    .execute();
+
   const userId = (
     await db
-      .insertInto('users')
-      .values({
-        username: event.body.username,
-        last_name: event.body.lastName,
-        first_name: event.body.firstName,
-      })
-      .returning('id')
+      .selectFrom('users')
+      .select('id')
+      .where('username', '=', event.body.username)
       .execute()
   )[0].id;
-
   const roles = (
     await db
       .selectFrom('roles')
