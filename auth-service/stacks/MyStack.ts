@@ -8,6 +8,7 @@ export function MyStack({ stack }: StackContext) {
       'POST /sign-up': 'functions/sign-up/function.handler',
       'POST /challenge': 'functions/challenge/function.handler',
       'POST /authenticate': 'functions/authenticate/function.handler',
+      'POST /refresh': 'functions/refresh/function.handler',
       'POST /token': 'functions/validate-token/function.handler',
       'GET /me': 'functions/user-info/function.handler',
     },
