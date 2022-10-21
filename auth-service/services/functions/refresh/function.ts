@@ -10,39 +10,23 @@ Upon verifying the Refresh token, we generate a new access token and refresh tok
 ```json
 {
   "token": "patirwh3etgvnhajuiprng...",
-  "refresh": "hgubirofbaoewfbehfiaweh..."
 }
 ```
 */
 
 import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
-import validator from '@middy/validator';
+import { Config } from '@serverless-stack/node/config';
+import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 import { sign } from 'jsonwebtoken';
 import { db } from 'lib/db/db.connection';
 import clientVerify from 'lib/middleware/client-verify';
-import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
+import { json } from '../../lib/lambda-utils';
 import { logger as Logger } from '../../lib/logger';
 import jwtVerify from '../../lib/middleware/jwt-verify';
 import requestMonitoring from '../../lib/middleware/request-monitoring';
 
-export const inputSchema = {
-  type: 'object',
-  properties: {
-    body: {
-      type: 'object',
-      properties: {
-        token: { type: 'string' },
-        refresh: { type: 'string' },
-      },
-      required: ['token', 'refresh'],
-    },
-  },
-} as const;
-
-const refresh: APIGatewayJSONBodyEventHandler<
-  typeof inputSchema.properties.body
-> = async (event) => {
+const refresh: APIGatewayProxyHandlerV2 = async (event) => {
   const username = event.headers['x-user-id']!;
   const userIdResponse = await db
     .selectFrom('users')
@@ -72,37 +56,15 @@ const refresh: APIGatewayJSONBodyEventHandler<
       message: 'Bad Request',
     };
   }
-  if (clients[0].refresh_token === event.body.refresh) {
-    const token = sign(
-      { username: username },
-      event.headers['x-ssm-refresh-secret']!,
-      {
-        // had to switch around the headers
-        issuer: 'whiskey-user-service.mattwyskiel.com',
-        subject: `${userIdResponse[0].id}`,
-        expiresIn: '1h',
-      }
-    );
+  const refreshToken = event.headers.authorization?.match('Bearer (.*)')![0]!;
+  if (clients[0].refresh_token === refreshToken) {
+    const token = sign({ username: username }, Config.JWT_SECRET, {
+      issuer: 'whiskey-user-service.mattwyskiel.com',
+      subject: `${userIdResponse[0].id}`,
+      expiresIn: '1h',
+    });
 
-    const refresh = sign(
-      { username: username },
-      event.headers['x-ssm-jwt-secret']!,
-      {
-        // had to switch around the headers
-        issuer: 'whiskey-user-service.mattwyskiel.com',
-        subject: `${userIdResponse[0].id}`,
-        expiresIn: '90d',
-      }
-    );
-
-    await db
-      .updateTable('users_clients_associations')
-      .set({ refresh_token: refresh })
-      .where('user_id', '=', userIdResponse[0].id)
-      .where('client_id', '=', clientId)
-      .execute();
-
-    return json({ token, refresh });
+    return json({ token });
   } else {
     Logger.error('Refresh token not present for user record');
     throw {
@@ -114,7 +76,6 @@ const refresh: APIGatewayJSONBodyEventHandler<
 
 export const handler = middy(refresh)
   .use(jsonBodyParser())
-  .use(validator({ inputSchema }))
-  .use(requestMonitoring<typeof inputSchema.properties.body>())
+  .use(requestMonitoring())
   .use(clientVerify())
-  .use(jwtVerify<typeof inputSchema.properties.body>());
+  .use(jwtVerify());

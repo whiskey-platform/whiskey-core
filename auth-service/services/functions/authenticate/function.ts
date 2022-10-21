@@ -38,6 +38,7 @@ import { sign } from 'jsonwebtoken';
 import { logger as Logger } from '../../lib/logger';
 import clientVerify from '../../lib/middleware/client-verify';
 import { db } from 'lib/db/db.connection';
+import { Config } from '@serverless-stack/node/config';
 
 export const inputSchema = {
   type: 'object',
@@ -103,7 +104,7 @@ const authenticate: APIGatewayJSONBodyEventHandler<
 
     const token = sign(
       { username: userIdResponse[0].username },
-      event.headers['x-ssm-jwt-secret']!,
+      Config.JWT_SECRET,
       {
         issuer: 'whiskey-user-service.mattwyskiel.com',
         subject: `${userIdResponse[0].id}`,
@@ -113,7 +114,7 @@ const authenticate: APIGatewayJSONBodyEventHandler<
 
     const refresh = sign(
       { username: userIdResponse[0].username },
-      event.headers['x-ssm-refresh-secret']!,
+      Config.JWT_SECRET,
       {
         issuer: 'whiskey-user-service.mattwyskiel.com',
         subject: `${userIdResponse[0].id}`,
