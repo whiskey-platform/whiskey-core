@@ -1,2 +1,5 @@
 before_compile:
-  - n lts
+  - n 16
+  - npm install -g pnpm
+compile:
+  - pnpm install
