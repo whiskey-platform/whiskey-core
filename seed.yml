@@ -2,4 +2,5 @@ before_compile:
   - n 16
   - npm install -g pnpm
 compile:
+  - cd $SEED_SERVICE_PATH
   - pnpm install
