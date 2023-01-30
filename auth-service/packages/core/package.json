@@ -1,0 +1,21 @@
+{
+  "name": "@auth-service/core",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "sst bind 'vitest'",
+    "typecheck": "tsc -noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "sst": "rc",
+    "vitest": "^0.28.3"
+  },
+  "dependencies": {
+    "@planetscale/database": "*",
+    "kysely": "^0.23.4",
+    "kysely-planetscale": "^1.2.1",
+    "sst": "rc",
+    "undici": "^5.16.0"
+  }
+}

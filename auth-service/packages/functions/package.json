@@ -1,0 +1,27 @@
+{
+  "name": "@auth-service/functions",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "sst bind 'vitest'",
+    "typecheck": "tsc -noEmit"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.110",
+    "@types/jsonwebtoken": "^9.0.1",
+    "@types/node": "^18.11.18",
+    "@types/uuid": "^9.0.0",
+    "json-schema-to-ts": "^2.6.2",
+    "sst": "rc"
+  },
+  "dependencies": {
+    "@middy/core": "^4.2.1",
+    "@middy/http-json-body-parser": "^4.2.1",
+    "@middy/validator": "^4.2.1",
+    "jsonwebtoken": "^9.0.0",
+    "secure-remote-password": "^0.3.1",
+    "sst": "rc",
+    "uuid": "^9.0.0",
+    "winston": "^3.8.2"
+  }
+}

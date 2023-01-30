@@ -1,4 +1,4 @@
-import { Config, StackContext } from '@serverless-stack/resources';
+import { Config, StackContext } from 'sst/constructs';
 
 export default function SecretsStack({ stack }: StackContext) {
   const DB_NAME = new Config.Secret(stack, 'DB_NAME');
