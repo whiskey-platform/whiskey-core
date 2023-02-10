@@ -153,6 +153,7 @@ const authenticate: APIGatewayJSONBodyEventHandler<
 
 export const handler = middy(authenticate)
   .use(jsonBodyParser())
-  .use(validator({ inputSchema }))
+  // .use(validator({ inputSchema }))
+  .use(validator({eventSchema: inputSchema}))
   .use(requestMonitoring<typeof inputSchema.properties.body>())
   .use(clientVerify<typeof inputSchema.properties.body>());

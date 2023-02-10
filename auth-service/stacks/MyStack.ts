@@ -1,4 +1,4 @@
-import { StackContext, Api, use } from 'sst/constructs';
+import { StackContext, Api, use, Config } from 'sst/constructs';
 import SecretsStack from './Secrets';
 
 export function MyStack({ stack }: StackContext) {
@@ -13,7 +13,11 @@ export function MyStack({ stack }: StackContext) {
       'GET /me': 'packages/functions/src/functions/user-info/function.handler',
     },
   });
-  api.bind([Secrets.DB_HOST, Secrets.DB_NAME, Secrets.DB_USERNAME, Secrets.DB_PASSWORD]);
+  api.bind([Secrets.DB_HOST, Secrets.DB_NAME, Secrets.DB_USERNAME, Secrets.DB_PASSWORD, Secrets.JWT_SECRET]);
+
+  const JWT_ISSUER = new Config.Parameter(stack, 'JWT_ISSUER', {value: 'whiskey.mattwyskiel.com'});
+  api.bind([JWT_ISSUER]);
+
   stack.addOutputs({
     ApiEndpoint: api.url,
   });

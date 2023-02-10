@@ -29,7 +29,7 @@ export const jwtVerify = <S>(): middy.MiddlewareObj<
         throw { status: 401, message: 'NoTokenError' };
       }
       const payload = verify(inputToken!, Config.JWT_SECRET, {
-        issuer: process.env.JWT_ISSUER,
+        issuer: Config.JWT_ISSUER,
       }) as JwtPayload;
 
       request.event.headers = {

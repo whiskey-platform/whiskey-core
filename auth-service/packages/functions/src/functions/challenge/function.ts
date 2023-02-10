@@ -99,6 +99,6 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
 
 export const handler = middy(authChallenge)
   .use(jsonBodyParser())
-  .use(validator({ inputSchema }))
+  .use(validator({ eventSchema: inputSchema }))
   .use(requestMonitoring<typeof inputSchema.properties.body>())
   .use(clientVerify<typeof inputSchema.properties.body>());
