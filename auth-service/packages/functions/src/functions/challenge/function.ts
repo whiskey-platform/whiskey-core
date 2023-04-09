@@ -36,6 +36,7 @@ import requestMonitoring from '../../middleware/request-monitoring';
 import clientVerify from '../../middleware/client-verify';
 import { db } from '@auth-service/core/db/db.connection';
 import { transpileSchema } from '@middy/validator/transpile';
+import inputOutputLogger from '@middy/input-output-logger';
 
 export const inputSchema = {
   type: 'object',
@@ -100,6 +101,7 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
 
 export const handler = middy(authChallenge)
   .use(jsonBodyParser())
+  .use(inputOutputLogger())
   .use(validator({ eventSchema: transpileSchema(inputSchema) }))
   .use(requestMonitoring<typeof inputSchema.properties.body>())
   .use(clientVerify<typeof inputSchema.properties.body>());
