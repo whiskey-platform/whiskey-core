@@ -26,6 +26,7 @@ This will simply store the information in a DB and return a 'success' boolean:
 import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import validator from '@middy/validator';
+import { transpileSchema } from '@middy/validator/transpile';
 import { db } from '@auth-service/core/db/db.connection';
 import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
 import { deriveVerifier, generateSalt } from 'secure-remote-password/client';
@@ -98,6 +99,6 @@ const signUp: APIGatewayJSONBodyEventHandler<typeof inputSchema.properties.body>
 
 export const handler = middy(signUp)
   .use(jsonBodyParser())
-  .use(validator({ eventSchema: inputSchema }))
+  .use(validator({ eventSchema: transpileSchema(inputSchema) }))
   .use(requestMonitoring<typeof inputSchema.properties.body>())
   .use(clientVerify());
