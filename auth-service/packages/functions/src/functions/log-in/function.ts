@@ -4,7 +4,7 @@
 ```json
 {
   "username": "mattwyskiel",
-  "publicKey": "DA084F5C..."
+  "password": "DA084F5C..."
 }
 ```
 
@@ -29,13 +29,14 @@ Headers:
 import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import validator from '@middy/validator';
-import { generateEphemeral as clientEphemeral, generateSalt } from 'secure-remote-password/client';
-import { generateEphemeral } from 'secure-remote-password/server';
 import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
 import requestMonitoring from '../../middleware/request-monitoring';
 import clientVerify from '../../middleware/client-verify';
 import { db } from '@auth-service/core/db/db.connection';
 import { transpileSchema } from '@middy/validator/transpile';
+import { verify } from 'argon2';
+import { sign } from 'jsonwebtoken';
+import { Config } from 'sst/node/config';
 
 export const inputSchema = {
   type: 'object',
@@ -44,9 +45,9 @@ export const inputSchema = {
       type: 'object',
       properties: {
         username: { type: 'string' },
-        publicKey: { type: 'string' },
+        password: { type: 'string' },
       },
-      required: ['username', 'publicKey'],
+      required: ['username', 'password'],
     },
   },
 } as const;
@@ -56,45 +57,53 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
 > = async event => {
   const userIdResponse = await db
     .selectFrom('users')
-    .select('id')
+    .select(['id', 'username'])
     .where('username', '=', event.body.username)
     .execute();
 
   if (userIdResponse[0] === undefined) {
-    return json({
-      salt: generateSalt(),
-      publicKey: clientEphemeral().public,
-    });
+    return { statusCode: 401 };
   }
 
   const auth_info = await db
     .selectFrom('auth_info')
-    .select(['salt', 'verifier'])
+    .select(['password_hash'])
     .where('user_id', '=', userIdResponse[0].id)
     .execute();
 
   if (auth_info[0] === undefined) {
-    return json({
-      salt: generateSalt(),
-      publicKey: clientEphemeral().public,
-    });
+    return { statusCode: 401 };
   }
 
-  const { salt, verifier } = auth_info[0];
-  const serverEphemeral = generateEphemeral(verifier);
+  if (!(await verify(auth_info[0].password_hash, event.body.password))) {
+    return { statusCode: 401 };
+  }
+
+  const token = sign({ username: userIdResponse[0].username }, Config.JWT_SECRET, {
+    issuer: 'whiskey-user-service.mattwyskiel.com',
+    subject: `${userIdResponse[0].id}`,
+    expiresIn: '1h',
+  });
+
+  const refresh = sign({ username: userIdResponse[0].username }, Config.JWT_SECRET, {
+    issuer: 'whiskey-user-service.mattwyskiel.com',
+    subject: `${userIdResponse[0].id}`,
+    expiresIn: '90d',
+  });
 
   await db
-    .updateTable('auth_info')
-    .set({
-      server_ephemeral: serverEphemeral.secret,
-      client_ephemeral: event.body.publicKey,
+    .insertInto('users_clients_associations')
+    .values({
+      user_id: userIdResponse[0].id,
+      client_id: event.headers['x-whiskey-client-id']!,
+      refresh_token: refresh,
     })
-    .where('user_id', '=', userIdResponse[0].id)
+    .onDuplicateKeyUpdate({ refresh_token: refresh })
     .execute();
 
   return json({
-    salt,
-    publicKey: serverEphemeral.public,
+    token,
+    refresh,
   });
 };
 

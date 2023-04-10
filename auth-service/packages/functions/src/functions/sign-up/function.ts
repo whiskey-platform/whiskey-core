@@ -12,7 +12,7 @@ This will be a plain username/password signup flow from an administrative contex
 }
 ```
 
-A salt and verifier will be generated, and stored.
+A password hash will be generated, and stored.
 
 This will simply store the information in a DB and return a 'success' boolean:
 
@@ -29,11 +29,9 @@ import validator from '@middy/validator';
 import { transpileSchema } from '@middy/validator/transpile';
 import { db } from '@auth-service/core/db/db.connection';
 import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
-import { deriveVerifier, generateSalt } from 'secure-remote-password/client';
 import requestMonitoring from '../../middleware/request-monitoring';
-import { promisify } from 'util';
-import { pbkdf2 } from 'crypto';
 import clientVerify from '../../middleware/client-verify';
+import { argon2id, hash } from 'argon2';
 
 export const inputSchema = {
   type: 'object',
@@ -77,18 +75,13 @@ const signUp: APIGatewayJSONBodyEventHandler<typeof inputSchema.properties.body>
       .execute();
   }
 
-  const salt = generateSalt();
-  const deriveKey = promisify(pbkdf2);
-  const derivedPrivateKey = (
-    await deriveKey(event.body.password, salt, 1, 64, 'sha512')
-  ).toString();
+  const passwordHash = await hash(event.body.password);
 
   await db
     .insertInto('auth_info')
     .values({
       user_id: userId,
-      salt,
-      verifier: deriveVerifier(derivedPrivateKey),
+      password_hash: passwordHash,
     })
     .execute();
 
