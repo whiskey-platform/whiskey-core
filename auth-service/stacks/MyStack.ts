@@ -11,13 +11,6 @@ export function MyStack({ stack }: StackContext) {
       'POST /token': 'packages/functions/src/functions/validate-token/function.handler',
       'GET /me': 'packages/functions/src/functions/user-info/function.handler',
     },
-    defaults: {
-      function: {
-        nodejs: {
-          install: ['argon2'],
-        },
-      },
-    },
   });
   api.bind([
     Secrets.DB_HOST,

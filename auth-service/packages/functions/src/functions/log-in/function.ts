@@ -34,9 +34,10 @@ import requestMonitoring from '../../middleware/request-monitoring';
 import clientVerify from '../../middleware/client-verify';
 import { db } from '@auth-service/core/db/db.connection';
 import { transpileSchema } from '@middy/validator/transpile';
-import { verify } from 'argon2';
 import { sign } from 'jsonwebtoken';
 import { Config } from 'sst/node/config';
+import { pbkdf2, pbkdf2Sync } from 'crypto';
+import { promisify } from 'util';
 
 export const inputSchema = {
   type: 'object',
@@ -67,7 +68,7 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
 
   const auth_info = await db
     .selectFrom('auth_info')
-    .select(['password_hash'])
+    .select(['hash', 'salt'])
     .where('user_id', '=', userIdResponse[0].id)
     .execute();
 
@@ -75,7 +76,10 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
     return { statusCode: 401 };
   }
 
-  if (!(await verify(auth_info[0].password_hash, event.body.password))) {
+  const hasher = promisify(pbkdf2);
+  var computed = await hasher(event.body.password, auth_info[0].salt, 1000, 64, `sha512`);
+
+  if (!(auth_info[0].hash === computed.toString('hex'))) {
     return { statusCode: 401 };
   }
 

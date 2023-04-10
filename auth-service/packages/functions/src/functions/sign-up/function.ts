@@ -31,7 +31,8 @@ import { db } from '@auth-service/core/db/db.connection';
 import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
 import requestMonitoring from '../../middleware/request-monitoring';
 import clientVerify from '../../middleware/client-verify';
-import { argon2id, hash } from 'argon2';
+import { pbkdf2, pbkdf2Sync, randomBytes } from 'crypto';
+import { promisify } from 'util';
 
 export const inputSchema = {
   type: 'object',
@@ -75,13 +76,16 @@ const signUp: APIGatewayJSONBodyEventHandler<typeof inputSchema.properties.body>
       .execute();
   }
 
-  const passwordHash = await hash(event.body.password);
+  const salt = randomBytes(16).toString('hex');
+  const hasher = promisify(pbkdf2);
+  const hash = await hasher(event.body.password, salt, 1000, 64, 'sha512');
 
   await db
     .insertInto('auth_info')
     .values({
       user_id: userId,
-      password_hash: passwordHash,
+      hash: hash.toString('hex'),
+      salt,
     })
     .execute();
 
