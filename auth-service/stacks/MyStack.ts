@@ -21,7 +21,7 @@ export function MyStack({ stack }: StackContext) {
   ]);
 
   const JWT_ISSUER = new Config.Parameter(stack, 'JWT_ISSUER', {
-    value: 'whiskey.mattwyskiel.com',
+    value: 'whiskey-user-service.mattwyskiel.com',
   });
   api.bind([JWT_ISSUER]);
 
