@@ -27,26 +27,14 @@ import jwtVerify from '../../middleware/jwt-verify';
 import requestMonitoring from '../../middleware/request-monitoring';
 
 const refresh: APIGatewayProxyHandlerV2 = async event => {
-  const username = event.headers['x-user-id']!;
-  const userIdResponse = await db
-    .selectFrom('users')
-    .select(['id', 'username'])
-    .where('username', '=', username)
-    .execute();
+  const id = event.headers['x-user-id']!;
+  const username = event.headers['x-username'];
 
-  if (userIdResponse[0] === undefined) {
-    Logger.error(`User ${username} does not exist`);
-    throw {
-      status: 400,
-      message: 'Bad Request',
-    };
-  }
   const clientId = event.headers['x-whiskey-client-id']!;
   const clients = await db
-    .selectFrom('users_clients_associations')
+    .selectFrom('sessions')
     .select(['client_id', 'refresh_token'])
-    .where('user_id', '=', userIdResponse[0].id)
-    .where('client_id', '=', clientId)
+    .where('session_id', '=', event.headers['x-session']!)
     .execute();
 
   if (!clients[0]) {
@@ -56,13 +44,17 @@ const refresh: APIGatewayProxyHandlerV2 = async event => {
       message: 'Bad Request',
     };
   }
-  const refreshToken = event.headers.authorization?.match('Bearer (.*)')![0]!;
+  const refreshToken = event.headers.authorization?.match('Bearer (.*)')![1]!;
   if (clients[0].refresh_token === refreshToken) {
-    const token = sign({ username: username }, Config.JWT_SECRET, {
-      issuer: 'whiskey-user-service.mattwyskiel.com',
-      subject: `${userIdResponse[0].id}`,
-      expiresIn: '1h',
-    });
+    const token = sign(
+      { username: username, session: event.headers['x-session']! },
+      Config.JWT_SECRET,
+      {
+        issuer: 'whiskey-user-service.mattwyskiel.com',
+        subject: `${id}`,
+        expiresIn: '1h',
+      }
+    );
 
     return json({ token });
   } else {

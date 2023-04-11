@@ -34,10 +34,11 @@ import requestMonitoring from '../../middleware/request-monitoring';
 import clientVerify from '../../middleware/client-verify';
 import { db } from '@auth-service/core/db/db.connection';
 import { transpileSchema } from '@middy/validator/transpile';
-import { sign } from 'jsonwebtoken';
+import { sign, verify } from 'jsonwebtoken';
 import { Config } from 'sst/node/config';
 import { pbkdf2, pbkdf2Sync } from 'crypto';
 import { promisify } from 'util';
+import { v4 } from 'uuid';
 
 export const inputSchema = {
   type: 'object',
@@ -83,21 +84,24 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
     return { statusCode: 401 };
   }
 
-  const token = sign({ username: userIdResponse[0].username }, Config.JWT_SECRET, {
+  const session = v4();
+
+  const token = sign({ username: userIdResponse[0].username, session }, Config.JWT_SECRET, {
     issuer: 'whiskey-user-service.mattwyskiel.com',
     subject: `${userIdResponse[0].id}`,
     expiresIn: '1h',
   });
 
-  const refresh = sign({ username: userIdResponse[0].username }, Config.JWT_SECRET, {
+  const refresh = sign({ username: userIdResponse[0].username, session }, Config.JWT_SECRET, {
     issuer: 'whiskey-user-service.mattwyskiel.com',
     subject: `${userIdResponse[0].id}`,
     expiresIn: '90d',
   });
 
   await db
-    .insertInto('users_clients_associations')
+    .insertInto('sessions')
     .values({
+      session_id: session,
       user_id: userIdResponse[0].id,
       client_id: event.headers['x-whiskey-client-id']!,
       refresh_token: refresh,

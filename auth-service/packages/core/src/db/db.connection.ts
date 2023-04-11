@@ -2,7 +2,7 @@ import { Config } from 'sst/node/config';
 import { Kysely } from 'kysely';
 import { PlanetScaleDialect } from 'kysely-planetscale';
 import { AuthInfoTable } from './interfaces/auth_info.table';
-import { UsersToClientsAssociationsTable } from './interfaces/users_clients_associations.table';
+import { SessionsTable } from './interfaces/users_clients_associations.table';
 import { RoleTable } from './interfaces/roles.table';
 import { UserTable } from './interfaces/users.table';
 import { UsersToRolesAssociationTable } from './interfaces/users_roles_associations.table';
@@ -14,7 +14,7 @@ export interface Database {
   users: UserTable;
   roles: RoleTable;
   users_roles_associations: UsersToRolesAssociationTable;
-  users_clients_associations: UsersToClientsAssociationsTable;
+  sessions: SessionsTable;
   auth_info: AuthInfoTable;
 }
 

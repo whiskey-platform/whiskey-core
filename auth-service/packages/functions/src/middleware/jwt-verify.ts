@@ -36,6 +36,7 @@ export const jwtVerify = <S>(): middy.MiddlewareObj<
         ...request.event.headers,
         'x-user-id': payload.sub,
         'x-username': payload.username,
+        'x-session': payload.session,
       };
     } catch (error) {
       if (error as VerifyErrors) {
