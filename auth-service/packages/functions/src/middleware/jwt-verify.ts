@@ -23,7 +23,7 @@ export const jwtVerify = <S>(): middy.MiddlewareObj<
 > => {
   const before: middy.MiddlewareFn<APIGatewayEvent<S>, APIGatewayProxyResultV2> = async request => {
     Logger.info('Verifying JWT token');
-    const inputToken = request.event.headers['Authorization']?.split(' ')[1];
+    const inputToken = request.event.headers.authorization?.split(' ')[1];
     try {
       if (!inputToken) {
         throw { status: 401, message: 'NoTokenError' };
