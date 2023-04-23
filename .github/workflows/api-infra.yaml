@@ -37,20 +37,20 @@ jobs:
       - run: echo "SST_ENV=prod" >> "$GITHUB_ENV"
         if: startsWith(github.ref_name, 'main')
       - run: pnpm sst deploy --stage ${{env.SST_ENV}} --outputs-file outputs.json
-      - name: Add outputs to env
-        id: sst_outputs
-        run: |
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "SST_OUTPUTS<<$EOF" >> "$GITHUB_OUTPUT"
-          cat ./.sst/outputs.json >> "$GITHUB_OUTPUT"
-          echo "$EOF" >> "$GITHUB_OUTPUT"
-      - run: gh variable set API_INFRA_VARS --body "${{fromJson(steps.sst_outputs.outputs.SST_OUTPUTS)['${{env.SST_ENV}}-api-infra-Infra']}}" --env ${{env.SST_ENV}}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Add outputs to env
+      #   id: sst_outputs
+      #   run: |
+      #     EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+      #     echo "SST_OUTPUTS<<$EOF" >> "$GITHUB_OUTPUT"
+      #     cat ./.sst/outputs.json >> "$GITHUB_OUTPUT"
+      #     echo "$EOF" >> "$GITHUB_OUTPUT"
+      # - run: gh variable set API_INFRA_VARS --body "${{fromJson(steps.sst_outputs.outputs.SST_OUTPUTS)['${{env.SST_ENV}}-api-infra-Infra']}}" --env ${{env.SST_ENV}}
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate Outputs
         run: |
           echo "```json" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "${{steps.sst_outputs.outputs.SST_OUTPUTS}}" >> $GITHUB_STEP_SUMMARY
+          cat ./.sst/outputs.json >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "```" >> $GITHUB_STEP_SUMMARY
