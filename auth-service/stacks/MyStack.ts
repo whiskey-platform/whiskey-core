@@ -22,11 +22,6 @@ export function MyStack({ stack, app }: StackContext) {
               regionalDomainName: process.env.API_REGIONAL_DOMAIN_NAME!,
               regionalHostedZoneId: process.env.API_REGIONAL_HOSTED_ZONE_ID!,
             }),
-            certificate: Certificate.fromCertificateArn(
-              stack,
-              'ApiCert',
-              process.env.API_CERTIFICATE_ARN!
-            ),
           },
         }
       : undefined,
