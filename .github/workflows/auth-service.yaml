@@ -7,7 +7,7 @@ on:
       - 'auth-service/**'
       - '.github/workflows/auth-service.yaml'
 
-name: API Infra
+name: Auth Service
 
 permissions:
   id-token: write # This is required for requesting the JWT
