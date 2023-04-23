@@ -11,7 +11,6 @@ export function Infra({ stack, app }: StackContext) {
             app.stage !== 'prod' ? `.${app.stage}` : ''
           }.whiskey.mattwyskiel.com`,
           hostedZone: 'mattwyskiel.com',
-          path: 'push-notifications',
         }
       : undefined,
   });
