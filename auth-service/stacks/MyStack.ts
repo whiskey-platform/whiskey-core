@@ -1,7 +1,7 @@
 import { StackContext, Api, use, Config } from 'sst/constructs';
 import SecretsStack from './Secrets';
 
-export function MyStack({ stack }: StackContext) {
+export function MyStack({ stack, app }: StackContext) {
   const Secrets = use(SecretsStack);
   const api = new Api(stack, 'api', {
     routes: {
@@ -11,6 +11,13 @@ export function MyStack({ stack }: StackContext) {
       'POST /token': 'packages/functions/src/functions/validate-token/function.handler',
       'GET /me': 'packages/functions/src/functions/user-info/function.handler',
     },
+    customDomain: !app.local
+      ? {
+          domainName: `api${app.stage !== 'prod' ? `.${app.stage}` : ''}.whiskey.mattwyskiel.com`,
+          hostedZone: 'mattwyskiel.com',
+          path: 'auth',
+        }
+      : undefined,
   });
   api.bind([
     Secrets.DB_HOST,
