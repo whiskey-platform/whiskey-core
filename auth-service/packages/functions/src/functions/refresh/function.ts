@@ -5,7 +5,7 @@ No JSON body - only Authorization header
 
 'Authorization': 'Bearer uhagip4rghtiueorwhp...'
 
-Upon verifying the Refresh token, we generate a new access token and refresh token
+Upon verifying the Refresh token, we generate a new access token
 
 ```json
 {

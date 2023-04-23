@@ -1,4 +1,5 @@
 import { StackContext, Api, use, Config } from 'sst/constructs';
+import { DomainName } from '@aws-cdk/aws-apigatewayv2-alpha';
 import SecretsStack from './Secrets';
 
 export function MyStack({ stack, app }: StackContext) {
@@ -13,9 +14,14 @@ export function MyStack({ stack, app }: StackContext) {
     },
     customDomain: !app.local
       ? {
-          domainName: `api${app.stage !== 'prod' ? `.${app.stage}` : ''}.whiskey.mattwyskiel.com`,
-          hostedZone: 'mattwyskiel.com',
           path: 'auth',
+          cdk: {
+            domainName: DomainName.fromDomainNameAttributes(stack, 'ApiDomain', {
+              name: process.env.DOMAIN_NAME,
+              regionalDomainName: process.env.REGIONAL_DOMAIN_NAME,
+              regionalHostedZoneId: process.env.REGIONAL_HOSTED_ZONE_ID,
+            }),
+          },
         }
       : undefined,
   });

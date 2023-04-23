@@ -25,5 +25,8 @@
   },
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "@aws-cdk/aws-apigatewayv2-alpha": "2.76.0-alpha.0"
+  }
 }

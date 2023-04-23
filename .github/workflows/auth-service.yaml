@@ -1,0 +1,55 @@
+on:
+  push:
+    branches:
+      - 'main'
+      - 'develop'
+    paths:
+      - 'auth-service/**'
+      - '.github/workflows/auth-service.yaml'
+
+name: API Infra
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
+jobs:
+  deploy:
+    defaults:
+      run:
+        working-directory: ./auth-service
+        shell: bash
+    runs-on: ubuntu-latest
+    name: Publishes this SST stack
+    steps:
+      - uses: actions/checkout@v3
+      - id: pnpm-install
+        uses: mattwyskiel/sst-node-pnpm-setup@v1
+      - run: pnpm i
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{secrets.AWS_ROLE_ARN}}
+          role-session-name: whiskey-api-infra
+      - run: echo "SST_ENV=dev" >> "$GITHUB_ENV"
+        if: startsWith(github.ref_name, 'develop')
+      - run: echo "SST_ENV=prod" >> "$GITHUB_ENV"
+        if: startsWith(github.ref_name, 'main')
+      - run: pnpm sst deploy --stage ${{env.SST_ENV}} --outputs-file outputs.json
+      - run: cat .sst/outputs.json
+        name: Deployment Outputs
+      - name: Add outputs to env
+        id: sst_outputs
+        run: |
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          echo "SST_OUTPUTS<<$EOF" >> "$GITHUB_OUTPUT"
+          cat .sst/outputs.json >> "$GITHUB_OUTPUT"
+          echo "$EOF" >> "$GITHUB_OUTPUT"
+      - name: Generate Outputs
+        run: |
+          echo "```json" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${{steps.sst_outputs.outputs.SST_OUTPUTS}}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY

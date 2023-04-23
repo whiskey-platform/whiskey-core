@@ -12,18 +12,6 @@ Headers:
 'x-whiskey-client-id': 'bgurwioawfna...'
 'x-whiskey-client-secret': 'bgurwioawfna...'
 
-- We retrieve the `salt` and `verifier` from the DB using the provided username
-- We generate an ephemeral value pair using the verifier
-- We temporarily store the secret key from the value pair in the database (likely further encrypted)
-- We return the public key from that value pair, and the salt, to the client
-  - If the user is not found, provide a bogus salt and public key to the client.
-
-```json
-{
-  "salt": "FB95867E...",
-  "publicKey": "DA084F5C..."
-}
-```
 */
 
 import middy from '@middy/core';

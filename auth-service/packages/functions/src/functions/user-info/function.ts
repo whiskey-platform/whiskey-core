@@ -5,7 +5,6 @@
 No request body.
 
 The authenticated user (as verified in the `Authorization` header) will have their non-sensitive information returned.
-No salt nor verifier will be returned
 
 */
 
