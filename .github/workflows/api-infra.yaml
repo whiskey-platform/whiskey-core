@@ -48,9 +48,4 @@ jobs:
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Generate Outputs
-        run: |
-          echo "```json" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "${{steps.sst_outputs.outputs.SST_OUTPUTS}}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
+        run: echo ${{steps.sst_outputs.outputs.SST_OUTPUTS}}
