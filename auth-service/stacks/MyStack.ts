@@ -1,6 +1,7 @@
 import { StackContext, Api, use, Config } from 'sst/constructs';
 import { DomainName } from '@aws-cdk/aws-apigatewayv2-alpha';
 import SecretsStack from './Secrets';
+import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
 
 export function MyStack({ stack, app }: StackContext) {
   const Secrets = use(SecretsStack);
@@ -17,10 +18,15 @@ export function MyStack({ stack, app }: StackContext) {
           path: 'auth',
           cdk: {
             domainName: DomainName.fromDomainNameAttributes(stack, 'ApiDomain', {
-              name: process.env.DOMAIN_NAME,
-              regionalDomainName: process.env.REGIONAL_DOMAIN_NAME,
-              regionalHostedZoneId: process.env.REGIONAL_HOSTED_ZONE_ID,
+              name: process.env.API_DOMAIN_NAME!,
+              regionalDomainName: process.env.API_REGIONAL_DOMAIN_NAME!,
+              regionalHostedZoneId: process.env.API_REGIONAL_HOSTED_ZONE_ID!,
             }),
+            certificate: Certificate.fromCertificateArn(
+              stack,
+              'ApiCert',
+              process.env.API_CERTIFICATE_ARN!
+            ),
           },
         }
       : undefined,
