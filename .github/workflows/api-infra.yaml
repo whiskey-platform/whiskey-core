@@ -51,6 +51,6 @@ jobs:
         run: |
           echo "```json" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo $(cat .sst/outputs.json) >> $GITHUB_STEP_SUMMARY
+          echo "$(cat .sst/outputs.json)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "```" >> $GITHUB_STEP_SUMMARY
