@@ -39,4 +39,4 @@ jobs:
       - run: pnpm sst deploy --stage ${{env.SST_ENV}} --outputs-file outputs.json
       - uses: mattwyskiel/sst-outputs-to-ssm@main
         with:
-          outputs_path: .sst/outputs.json
+          outputs_path: api-infra/.sst/outputs.json
