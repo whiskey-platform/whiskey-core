@@ -47,8 +47,4 @@ export function MyStack({ stack, app }: StackContext) {
     value: 'whiskey-user-service.mattwyskiel.com',
   });
   api.bind([JWT_ISSUER]);
-
-  stack.addOutputs({
-    ApiEndpoint: api.url,
-  });
 }

@@ -36,15 +36,5 @@ jobs:
         if: startsWith(github.ref_name, 'develop')
       - run: echo "SST_ENV=prod" >> "$GITHUB_ENV"
         if: startsWith(github.ref_name, 'main')
-      - name: Change String Case
-        id: sst_env_case
-        uses: ASzc/change-string-case-action@v5
-        with:
-          string: ${{ env.SST_ENV }}
       - run: pnpm sst deploy --stage ${{env.SST_ENV}} --outputs-file outputs.json
-        env:
-          API_CERTIFICATE_ARN: ${{secrets.API_CERTIFICATE_ARN_PROD}}
-          API_REGIONAL_DOMAIN_NAME: ${{secrets.API_REGIONAL_DOMAIN_NAME_PROD}}
-          API_REGIONAL_HOSTED_ZONE_ID: ${{secrets.API_REGIONAL_HOSTED_ZONE_ID_PROD}}
-          API_DOMAIN_NAME: ${{vars.API_DOMAIN_NAME_PROD}}
         if: startsWith(env.SST_ENV, 'prod')
