@@ -20,7 +20,7 @@ export function MyStack({ stack, app }: StackContext) {
             domainName: DomainName.fromDomainNameAttributes(stack, 'ApiDomain', {
               name: StringParameter.valueFromLookup(
                 stack,
-                `/sst/api-infra/${app.stage}/Api/api/url`
+                `/sst-outputs/${app.stage}-api-infra-Infra/domainName`
               ),
               regionalDomainName: StringParameter.valueFromLookup(
                 stack,

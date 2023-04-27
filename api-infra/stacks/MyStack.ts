@@ -15,6 +15,7 @@ export function Infra({ stack, app }: StackContext) {
       : undefined,
   });
   stack.addOutputs({
+    domainName: api.cdk.domainName?.name,
     regionalDomainName: api.cdk.domainName?.regionalDomainName,
     regionalHostedZoneId: api.cdk.domainName?.regionalHostedZoneId,
     certificateArn: api.cdk.certificate?.certificateArn,
