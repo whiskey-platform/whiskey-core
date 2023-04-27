@@ -37,3 +37,6 @@ jobs:
       - run: echo "SST_ENV=prod" >> "$GITHUB_ENV"
         if: startsWith(github.ref_name, 'main')
       - run: pnpm sst deploy --stage ${{env.SST_ENV}} --outputs-file outputs.json
+      - uses: mattwyskiel/sst-outputs-to-ssm@main
+        with:
+          outputs_path: .sst/outputs.json
