@@ -23,16 +23,15 @@ This will simply store the information in a DB and return a 'success' boolean:
 ```
 */
 
-import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import validator from '@middy/validator';
 import { transpileSchema } from '@middy/validator/transpile';
-import { db } from '@auth-service/core/db/db.connection';
+import { db, wrapped } from '@auth-service/core';
 import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
-import requestMonitoring from '../../middleware/request-monitoring';
 import clientVerify from '../../middleware/client-verify';
-import { pbkdf2, pbkdf2Sync, randomBytes } from 'crypto';
+import { pbkdf2, randomBytes } from 'crypto';
 import { promisify } from 'util';
+import responseMonitoring from '../../middleware/response-monitoring';
 
 export const inputSchema = {
   type: 'object',
@@ -94,8 +93,8 @@ const signUp: APIGatewayJSONBodyEventHandler<typeof inputSchema.properties.body>
   });
 };
 
-export const handler = middy(signUp)
+export const handler = wrapped(signUp)
   .use(jsonBodyParser())
   .use(validator({ eventSchema: transpileSchema(inputSchema) }))
-  .use(requestMonitoring<typeof inputSchema.properties.body>())
-  .use(clientVerify());
+  .use(clientVerify())
+  .use(responseMonitoring());

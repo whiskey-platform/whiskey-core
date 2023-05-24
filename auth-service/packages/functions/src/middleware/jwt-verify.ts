@@ -3,8 +3,8 @@ import { Config } from 'sst/node/config';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
 import { JwtPayload, verify, VerifyErrors } from 'jsonwebtoken';
 import { APIGatewayJSONBodyEvent } from '../lib/lambda-utils';
-import { logger as Logger } from '../lib/logger';
-import { IError } from './request-monitoring';
+import { IError } from '../lib/IError';
+import { logger } from '@auth-service/core';
 type APIGatewayEvent<S> = APIGatewayProxyEventV2 | APIGatewayJSONBodyEvent<S>;
 
 /** 
@@ -22,7 +22,7 @@ export const jwtVerify = <S>(): middy.MiddlewareObj<
   APIGatewayProxyResultV2
 > => {
   const before: middy.MiddlewareFn<APIGatewayEvent<S>, APIGatewayProxyResultV2> = async request => {
-    Logger.info('Verifying JWT token');
+    logger.info('Verifying JWT token');
     const inputToken = request.event.headers.authorization?.split(' ')[1];
     try {
       if (!inputToken) {
@@ -52,7 +52,7 @@ export const jwtVerify = <S>(): middy.MiddlewareObj<
         throw error;
       } else {
         const err = error as Error;
-        Logger.error(err.message, { stack: err.stack });
+        logger.error(err.message, { stack: err.stack });
 
         throw {
           status: 401,

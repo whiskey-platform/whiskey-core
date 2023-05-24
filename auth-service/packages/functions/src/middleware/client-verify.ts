@@ -1,10 +1,9 @@
 import middy from '@middy/core';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { db } from '@auth-service/core/db/db.connection';
+import { db, logger as Logger } from '@auth-service/core';
 import { APIGatewayJSONBodyEvent } from '../lib/lambda-utils';
-import { logger as Logger } from '../lib/logger';
 // import { DynamoDBService } from '../services/DynamoDB.service';
-import { IError } from './request-monitoring';
+import { IError } from '../lib/IError';
 
 type APIGatewayEvent<S> = APIGatewayProxyEventV2 | APIGatewayJSONBodyEvent<S>;
 

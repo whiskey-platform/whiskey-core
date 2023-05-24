@@ -14,17 +14,15 @@ Upon verifying the Refresh token, we generate a new access token
 ```
 */
 
-import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import { Config } from 'sst/node/config';
 import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 import { sign } from 'jsonwebtoken';
-import { db } from '@auth-service/core/db/db.connection';
+import { db, logger as Logger, wrapped } from '@auth-service/core';
 import clientVerify from '../../middleware/client-verify';
 import { json } from '../../lib/lambda-utils';
-import { logger as Logger } from '../../lib/logger';
 import jwtVerify from '../../middleware/jwt-verify';
-import requestMonitoring from '../../middleware/request-monitoring';
+import responseMonitoring from '../../middleware/response-monitoring';
 
 const refresh: APIGatewayProxyHandlerV2 = async event => {
   const id = event.headers['x-user-id']!;
@@ -66,8 +64,8 @@ const refresh: APIGatewayProxyHandlerV2 = async event => {
   }
 };
 
-export const handler = middy(refresh)
+export const handler = wrapped(refresh)
   .use(jsonBodyParser())
-  .use(requestMonitoring())
   .use(clientVerify())
-  .use(jwtVerify());
+  .use(jwtVerify())
+  .use(responseMonitoring());

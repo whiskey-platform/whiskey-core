@@ -7,10 +7,14 @@
     "typecheck": "tsc -noEmit"
   },
   "devDependencies": {
+    "@types/aws-lambda": "^8.10.110",
     "@types/node": "^18.11.18",
     "vitest": "^0.28.3"
   },
   "dependencies": {
+    "@aws-lambda-powertools/logger": "^1.8.0",
+    "@aws-lambda-powertools/tracer": "^1.8.0",
+    "@middy/core": "^4.2.1",
     "@planetscale/database": "*",
     "kysely": "^0.23.4",
     "kysely-planetscale": "^1.2.1",

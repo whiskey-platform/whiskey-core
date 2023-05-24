@@ -14,19 +14,18 @@ Headers:
 
 */
 
-import middy from '@middy/core';
 import jsonBodyParser from '@middy/http-json-body-parser';
 import validator from '@middy/validator';
 import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
-import requestMonitoring from '../../middleware/request-monitoring';
 import clientVerify from '../../middleware/client-verify';
-import { db } from '@auth-service/core/db/db.connection';
+import { db, wrapped } from '@auth-service/core';
 import { transpileSchema } from '@middy/validator/transpile';
-import { sign, verify } from 'jsonwebtoken';
+import { sign } from 'jsonwebtoken';
 import { Config } from 'sst/node/config';
-import { pbkdf2, pbkdf2Sync } from 'crypto';
+import { pbkdf2 } from 'crypto';
 import { promisify } from 'util';
 import { v4 } from 'uuid';
+import responseMonitoring from '../../middleware/response-monitoring';
 
 export const inputSchema = {
   type: 'object',
@@ -103,8 +102,8 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
   });
 };
 
-export const handler = middy(authChallenge)
+export const handler = wrapped(authChallenge)
   .use(jsonBodyParser())
   .use(validator({ eventSchema: transpileSchema(inputSchema) }))
-  .use(requestMonitoring<typeof inputSchema.properties.body>())
-  .use(clientVerify<typeof inputSchema.properties.body>());
+  .use(clientVerify<typeof inputSchema.properties.body>())
+  .use(responseMonitoring());

@@ -2,9 +2,15 @@ import { StackContext, Api, use, Config } from 'sst/constructs';
 import { DomainName } from '@aws-cdk/aws-apigatewayv2-alpha';
 import SecretsStack from './Secrets';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
+import { LayerVersion } from 'aws-cdk-lib/aws-lambda';
 
 export function MyStack({ stack, app }: StackContext) {
   const Secrets = use(SecretsStack);
+  const powertools = LayerVersion.fromLayerVersionArn(
+    stack,
+    'PowertoolsLayer',
+    `arn:aws:lambda:${stack.region}:094274105915:layer:AWSLambdaPowertoolsTypeScript:11`
+  );
   const api = new Api(stack, 'api', {
     routes: {
       'POST /sign-up': 'packages/functions/src/functions/sign-up/function.handler',
@@ -34,6 +40,11 @@ export function MyStack({ stack, app }: StackContext) {
           },
         }
       : undefined,
+    defaults: {
+      function: {
+        layers: [powertools],
+      },
+    },
   });
   api.bind([
     Secrets.DB_HOST,

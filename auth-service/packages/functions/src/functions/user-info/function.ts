@@ -8,13 +8,12 @@ The authenticated user (as verified in the `Authorization` header) will have the
 
 */
 
-import middy from '@middy/core';
 import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
-import { db } from '@auth-service/core/db/db.connection';
+import { db, wrapped } from '@auth-service/core';
 import clientVerify from '../../middleware/client-verify';
 import { json } from '../../lib/lambda-utils';
 import jwtVerify from '../../middleware/jwt-verify';
-import requestMonitoring from '../../middleware/request-monitoring';
+import responseMonitoring from '../../middleware/response-monitoring';
 
 const me: APIGatewayProxyHandlerV2 = async event => {
   const user = (
@@ -28,4 +27,4 @@ const me: APIGatewayProxyHandlerV2 = async event => {
   return json(user);
 };
 
-export const handler = middy(me).use(requestMonitoring()).use(clientVerify()).use(jwtVerify());
+export const handler = wrapped(me).use(clientVerify()).use(jwtVerify()).use(responseMonitoring());
