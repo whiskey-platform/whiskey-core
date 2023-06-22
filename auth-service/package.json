@@ -16,17 +16,17 @@
     "@types/node": "^16.18.23",
     "@typescript-eslint/eslint-plugin": "^5.49.0",
     "@typescript-eslint/parser": "^5.49.0",
-    "aws-cdk-lib": "2.72.1",
+    "aws-cdk-lib": "2.84.0",
     "constructs": "10.1.156",
     "eslint": "^8.33.0",
     "prettier": "^2.8.3",
-    "sst": "2.8.28",
+    "sst": "2.16.1",
     "typescript": "^4.9.4"
   },
   "workspaces": [
     "packages/*"
   ],
   "dependencies": {
-    "@aws-cdk/aws-apigatewayv2-alpha": "^2.72.1-alpha.0"
+    "@aws-cdk/aws-apigatewayv2-alpha": "^2.84.0-alpha.0"
   }
 }

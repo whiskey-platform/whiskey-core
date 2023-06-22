@@ -20,7 +20,7 @@
     "@middy/input-output-logger": "^4.2.8",
     "@middy/validator": "^4.2.1",
     "jsonwebtoken": "^9.0.0",
-    "sst": "2.8.28",
+    "sst": "2.16.1",
     "uuid": "^9.0.0"
   }
 }
