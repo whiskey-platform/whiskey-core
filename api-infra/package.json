@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "sst": "2.16.3",
+    "sst": "2.19.0",
     "aws-cdk-lib": "2.84.0",
     "constructs": "10.1.156",
     "typescript": "^5.0.4",
