@@ -1,16 +1,16 @@
-import { StackContext, Api } from 'sst/constructs';
+import { StackContext, Api } from "sst/constructs";
 
 export function Infra({ stack, app }: StackContext) {
-  const api = new Api(stack, 'api', {
+  const api = new Api(stack, "api", {
     routes: {
-      'GET /': 'packages/functions/src/lambda.handler',
+      "GET /": "packages/functions/src/lambda.handler",
     },
     customDomain: !app.local
       ? {
           domainName: `api${
-            app.stage !== 'prod' ? `.${app.stage}` : ''
+            app.stage !== "prod" ? `.${app.stage}` : ""
           }.whiskey.mattwyskiel.com`,
-          hostedZone: 'mattwyskiel.com',
+          hostedZone: "mattwyskiel.com",
         }
       : undefined,
   });
