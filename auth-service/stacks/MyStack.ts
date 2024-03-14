@@ -1,4 +1,4 @@
-import { StackContext, Api, use, Config } from 'sst/constructs';
+import { StackContext, Api, use, Config, Script } from 'sst/constructs';
 import { DomainName } from '@aws-cdk/aws-apigatewayv2-alpha';
 import SecretsStack from './Secrets';
 import { StringParameter } from 'aws-cdk-lib/aws-ssm';
@@ -52,10 +52,21 @@ export function MyStack({ stack, app }: StackContext) {
     Secrets.DB_USERNAME,
     Secrets.DB_PASSWORD,
     Secrets.JWT_SECRET,
+    Secrets.DB_CONNECTION,
   ]);
 
   const JWT_ISSUER = new Config.Parameter(stack, 'JWT_ISSUER', {
     value: 'whiskey-user-service.mattwyskiel.com',
   });
   api.bind([JWT_ISSUER]);
+
+  new Script(stack, 'migrate-to-mongo', {
+    onCreate: 'packages/functions/src/functions/scripts/migrate-to-mongo.handler',
+    defaults: {
+      function: {
+        layers: [powertools],
+        bind: [Secrets.DB_USERNAME, Secrets.DB_PASSWORD, Secrets.DB_CONNECTION],
+      },
+    },
+  });
 }

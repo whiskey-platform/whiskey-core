@@ -6,6 +6,8 @@ export default function SecretsStack({ stack }: StackContext) {
   const DB_HOST = new Config.Secret(stack, 'DB_HOST');
   const DB_PASSWORD = new Config.Secret(stack, 'DB_PASSWORD');
 
+  const DB_CONNECTION = new Config.Secret(stack, 'DB_CONNECTION');
+
   const JWT_SECRET = new Config.Secret(stack, 'JWT_SECRET');
 
   return {
@@ -13,6 +15,7 @@ export default function SecretsStack({ stack }: StackContext) {
     DB_USERNAME,
     DB_HOST,
     DB_PASSWORD,
-    JWT_SECRET
+    DB_CONNECTION,
+    JWT_SECRET,
   };
 }

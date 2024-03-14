@@ -18,24 +18,23 @@ import jsonBodyParser from '@middy/http-json-body-parser';
 import { Config } from 'sst/node/config';
 import { APIGatewayProxyHandlerV2 } from 'aws-lambda';
 import { sign } from 'jsonwebtoken';
-import { db, logger as Logger, wrapped } from '@auth-service/core';
+import { connectToDB, logger as Logger, SessionsModel, wrapped } from '@auth-service/core';
 import clientVerify from '../../middleware/client-verify';
 import { json } from '../../lib/lambda-utils';
 import jwtVerify from '../../middleware/jwt-verify';
 import responseMonitoring from '../../middleware/response-monitoring';
+
+await connectToDB();
 
 const refresh: APIGatewayProxyHandlerV2 = async event => {
   const id = event.headers['x-user-id']!;
   const username = event.headers['x-username'];
 
   const clientId = event.headers['x-whiskey-client-id']!;
-  const clients = await db
-    .selectFrom('sessions')
-    .select(['client_id', 'refresh_token'])
-    .where('session_id', '=', event.headers['x-session']!)
-    .execute();
 
-  if (!clients[0]) {
+  const client = await SessionsModel.findById(event.headers['x-session']!);
+
+  if (!client) {
     Logger.error(`Unregistered client: ${clientId}`);
     throw {
       status: 400,
@@ -43,16 +42,12 @@ const refresh: APIGatewayProxyHandlerV2 = async event => {
     };
   }
   const refreshToken = event.headers.authorization?.match('Bearer (.*)')![1]!;
-  if (clients[0].refresh_token === refreshToken) {
-    const token = sign(
-      { username: username, session: event.headers['x-session']! },
-      Config.JWT_SECRET,
-      {
-        issuer: 'whiskey-user-service.mattwyskiel.com',
-        subject: `${id}`,
-        expiresIn: '1h',
-      }
-    );
+  if (client.refreshToken === refreshToken) {
+    const token = sign({ username, session: event.headers['x-session']! }, Config.JWT_SECRET, {
+      issuer: 'whiskey-user-service.mattwyskiel.com',
+      subject: `${id}`,
+      expiresIn: '1h',
+    });
 
     return json({ token });
   } else {

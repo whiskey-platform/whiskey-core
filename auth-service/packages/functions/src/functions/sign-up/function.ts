@@ -26,7 +26,7 @@ This will simply store the information in a DB and return a 'success' boolean:
 import jsonBodyParser from '@middy/http-json-body-parser';
 import validator from '@middy/validator';
 import { transpileSchema } from '@middy/validator/transpile';
-import { db, wrapped } from '@auth-service/core';
+import { UserModel, connectToDB, wrapped } from '@auth-service/core';
 import { APIGatewayJSONBodyEventHandler, json } from '../../lib/lambda-utils';
 import clientVerify from '../../middleware/client-verify';
 import { pbkdf2, randomBytes } from 'crypto';
@@ -50,43 +50,24 @@ export const inputSchema = {
   },
 } as const;
 
+await connectToDB();
+
 const signUp: APIGatewayJSONBodyEventHandler<typeof inputSchema.properties.body> = async event => {
   // insert user demographic info into table
-  await db
-    .insertInto('users')
-    .values({
-      username: event.body.username,
-      last_name: event.body.lastName,
-      first_name: event.body.firstName,
-    })
-    .execute();
-
-  const userId = (
-    await db.selectFrom('users').select('id').where('username', '=', event.body.username).execute()
-  )[0].id;
-  const roles = (
-    await db.selectFrom('roles').select('id').where('name', 'in', event.body.roles).execute()
-  ).map(r => r.id);
-
-  for (const role of roles) {
-    await db
-      .insertInto('users_roles_associations')
-      .values({ role_id: role, user_id: userId })
-      .execute();
-  }
-
   const salt = randomBytes(16).toString('hex');
   const hasher = promisify(pbkdf2);
   const hash = await hasher(event.body.password, salt, 1000, 64, 'sha512');
 
-  await db
-    .insertInto('auth_info')
-    .values({
-      user_id: userId,
+  const { _id: id } = await UserModel.create({
+    username: event.body.username,
+    firstName: event.body.firstName,
+    lastName: event.body.lastName,
+    roles: event.body.roles,
+    authInfo: {
       hash: hash.toString('hex'),
       salt,
-    })
-    .execute();
+    },
+  });
 
   return json({
     success: true,

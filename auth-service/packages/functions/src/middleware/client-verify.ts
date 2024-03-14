@@ -1,6 +1,6 @@
 import middy from '@middy/core';
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from 'aws-lambda';
-import { db, logger as Logger } from '@auth-service/core';
+import { AuthClientModel, connectToDB, logger as Logger } from '@auth-service/core';
 import { APIGatewayJSONBodyEvent } from '../lib/lambda-utils';
 // import { DynamoDBService } from '../services/DynamoDB.service';
 import { IError } from '../lib/IError';
@@ -16,6 +16,9 @@ middy(authenticatedFunction)
 ...
 ```
 */
+
+await connectToDB();
+
 export const clientVerify = <S>(): middy.MiddlewareObj<
   APIGatewayEvent<S>,
   APIGatewayProxyResultV2
@@ -33,20 +36,14 @@ export const clientVerify = <S>(): middy.MiddlewareObj<
         };
       }
 
-      const clientResponse = await db
-        .selectFrom('auth_clients')
-        .select(['id', 'secret'])
-        .where('id', '=', clientId!)
-        .execute();
-
-      if (!clientResponse[0]) {
+      const client = await AuthClientModel.findOne({ id: clientId });
+      if (!client) {
         Logger.error('Invalid client ID');
         throw {
           status: 401,
           message: 'ClientCredentialsError',
         };
       }
-      let client = clientResponse[0];
       if (clientSecret !== client.secret) {
         Logger.error('Invalid client secret');
         throw {
