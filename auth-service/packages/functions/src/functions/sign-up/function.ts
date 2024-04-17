@@ -53,7 +53,7 @@ export const inputSchema = {
 const signUp: APIGatewayJSONBodyEventHandler<typeof inputSchema.properties.body> = async event => {
   // insert user demographic info into table
   await db
-    .insertInto('users')
+    .insertInto('whiskey.users')
     .values({
       username: event.body.username,
       last_name: event.body.lastName,
@@ -62,15 +62,23 @@ const signUp: APIGatewayJSONBodyEventHandler<typeof inputSchema.properties.body>
     .execute();
 
   const userId = (
-    await db.selectFrom('users').select('id').where('username', '=', event.body.username).execute()
+    await db
+      .selectFrom('whiskey.users')
+      .select('id')
+      .where('username', '=', event.body.username)
+      .execute()
   )[0].id;
   const roles = (
-    await db.selectFrom('roles').select('id').where('name', 'in', event.body.roles).execute()
+    await db
+      .selectFrom('whiskey.roles')
+      .select('id')
+      .where('name', 'in', event.body.roles)
+      .execute()
   ).map(r => r.id);
 
   for (const role of roles) {
     await db
-      .insertInto('users_roles_associations')
+      .insertInto('whiskey.users_roles_associations')
       .values({ role_id: role, user_id: userId })
       .execute();
   }
@@ -80,7 +88,7 @@ const signUp: APIGatewayJSONBodyEventHandler<typeof inputSchema.properties.body>
   const hash = await hasher(event.body.password, salt, 1000, 64, 'sha512');
 
   await db
-    .insertInto('auth_info')
+    .insertInto('whiskey.auth_info')
     .values({
       user_id: userId,
       hash: hash.toString('hex'),

@@ -45,7 +45,7 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
   typeof inputSchema.properties.body
 > = async event => {
   const userIdResponse = await db
-    .selectFrom('users')
+    .selectFrom('whiskey.users')
     .select(['id', 'username'])
     .where('username', '=', event.body.username)
     .execute();
@@ -55,7 +55,7 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
   }
 
   const auth_info = await db
-    .selectFrom('auth_info')
+    .selectFrom('whiskey.auth_info')
     .select(['hash', 'salt'])
     .where('user_id', '=', userIdResponse[0].id)
     .execute();
@@ -86,7 +86,7 @@ const authChallenge: APIGatewayJSONBodyEventHandler<
   });
 
   await db
-    .insertInto('sessions')
+    .insertInto('whiskey.sessions')
     .values({
       session_id: session,
       user_id: userIdResponse[0].id,

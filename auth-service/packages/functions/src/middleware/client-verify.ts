@@ -34,7 +34,7 @@ export const clientVerify = <S>(): middy.MiddlewareObj<
       }
 
       const clientResponse = await db
-        .selectFrom('auth_clients')
+        .selectFrom('whiskey.auth_clients')
         .select(['id', 'secret'])
         .where('id', '=', clientId!)
         .execute();

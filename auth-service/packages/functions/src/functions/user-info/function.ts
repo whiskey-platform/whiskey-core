@@ -18,7 +18,7 @@ import responseMonitoring from '../../middleware/response-monitoring';
 const me: APIGatewayProxyHandlerV2 = async event => {
   const user = (
     await db
-      .selectFrom('users')
+      .selectFrom('whiskey.users')
       .selectAll()
       .where('username', '=', event.headers['x-username']!)
       .execute()

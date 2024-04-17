@@ -30,7 +30,7 @@ const refresh: APIGatewayProxyHandlerV2 = async event => {
 
   const clientId = event.headers['x-whiskey-client-id']!;
   const clients = await db
-    .selectFrom('sessions')
+    .selectFrom('whiskey.sessions')
     .select(['client_id', 'refresh_token'])
     .where('session_id', '=', event.headers['x-session']!)
     .execute();
