@@ -1,0 +1,34 @@
+on:
+  push:
+    branches:
+      - "main"
+    paths:
+      - "event-infra/**"
+      - ".github/workflows/event-infra.yaml"
+
+name: API Infra
+
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
+
+jobs:
+  deploy:
+    defaults:
+      run:
+        working-directory: ./event-infra
+        shell: bash
+    runs-on: ubuntu-latest
+    name: Publishes this SST app
+    steps:
+      - uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{secrets.AWS_ROLE_ARN}}
+          role-session-name: whiskey-event-infra
+      - name: Install SST
+        run: curl -fsSL https://ion.sst.dev/install | bash
+      - run: sst install
+      - run: sst deploy --stage=production
