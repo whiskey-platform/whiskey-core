@@ -6,7 +6,7 @@ on:
       - "event-infra/**"
       - ".github/workflows/event-infra.yaml"
 
-name: API Infra
+name: Event Infra
 
 permissions:
   id-token: write # This is required for requesting the JWT
