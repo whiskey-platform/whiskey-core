@@ -31,4 +31,8 @@ jobs:
       - name: Install SST
         run: curl -fsSL https://ion.sst.dev/install | bash
       - run: sst install
+        env:
+          NO_BUN: true
       - run: sst deploy --stage=production
+        env:
+          NO_BUN: true
