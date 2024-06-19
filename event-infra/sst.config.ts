@@ -12,5 +12,8 @@ export default $config({
     const eventBus = new aws.cloudwatch.EventBus("EventBus", {
       name: "whiskey-event-bus",
     });
+    const schemaRegistry = new aws.schemas.Registry("SchemaRegistry", {
+      name: "com.mattwyskiel.whiskey.events",
+    });
   },
 });
