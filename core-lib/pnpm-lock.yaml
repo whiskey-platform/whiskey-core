@@ -18,10 +18,10 @@ importers:
 
   packages/db:
     dependencies:
-      '@whiskey/logging':
+      '@whiskey-platform/logging':
         specifier: workspace:*
         version: link:../logging
-      '@whiskey/secrets':
+      '@whiskey-platform/secrets':
         specifier: workspace:*
         version: link:../secrets
       drizzle-orm:
@@ -62,7 +62,7 @@ importers:
       '@smithy/signature-v4':
         specifier: ^4.1.1
         version: 4.1.1
-      '@whiskey/logging':
+      '@whiskey-platform/logging':
         specifier: workspace:*
         version: link:../logging
       axios:
