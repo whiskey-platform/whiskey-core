@@ -30,6 +30,6 @@ jobs:
       - name: Build
         run: pnpm build
       - name: Publish to registry
-        run: pnpm publish --recursive --filter "@whiskey/*"
+        run: pnpm publish --recursive --filter "@whiskey/*" --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
