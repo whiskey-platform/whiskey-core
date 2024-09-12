@@ -9,6 +9,9 @@
     "dist"
   ],
   "repository": "https://github.com/whiskey-platform/whiskey-core.git",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "build": "tsup",
     "test": "echo \"Error: no test specified\" && exit 1"
