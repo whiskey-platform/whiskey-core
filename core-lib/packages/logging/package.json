@@ -1,5 +1,5 @@
 {
-  "name": "@whiskey/logging",
+  "name": "@whiskey-platform/logging",
   "version": "1.0.0",
   "description": "",
   "main": "./dist/index.js",
