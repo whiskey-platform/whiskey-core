@@ -1,4 +1,4 @@
-import { logger } from "@whiskey/logging";
+import { logger } from "@whiskey-platform/logging";
 import axios from "axios";
 import { STSClient, GetCallerIdentityCommand } from "@aws-sdk/client-sts";
 import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
