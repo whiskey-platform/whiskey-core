@@ -8,6 +8,7 @@
   "files": [
     "dist"
   ],
+  "repository": "https://github.com/whiskey-platform/whiskey-core.git",
   "scripts": {
     "build": "tsup",
     "test": "echo \"Error: no test specified\" && exit 1"
