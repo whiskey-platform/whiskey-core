@@ -1,0 +1,27 @@
+{
+  "name": "@whiskey/db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@whiskey/logging": "workspace:*",
+    "@whiskey/secrets": "workspace:*",
+    "drizzle-orm": "^0.33.0",
+    "postgres": "^3.4.4"
+  },
+  "devDependencies": {
+    "tsup": "^8.2.4"
+  }
+}

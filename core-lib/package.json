@@ -1,0 +1,19 @@
+{
+  "name": "whiskey",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "for package in $(ls packages); do (cd packages/$package && npm run build); done",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "@tsconfig/node-lts": "^20.1.3"
+  }
+}
